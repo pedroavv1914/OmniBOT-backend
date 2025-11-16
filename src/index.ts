@@ -5,15 +5,15 @@ import dotenv from 'dotenv'
 import flows from './routes/flows'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
+import bots from './routes/bots'
+import { EnvSchema } from './lib/env'
+import { buildSupabase } from './lib/supabase'
 
 dotenv.config()
 
-const envSchema = z.object({
-  PORT: z.string().optional()
-})
-
-const env = envSchema.parse(process.env)
+const env = EnvSchema.parse(process.env)
 const app = Fastify({ logger: true })
+(app as any).config = { env, supabase: buildSupabase(env) }
 
 app.register(cors, { origin: true })
 app.register(swagger, {
@@ -28,6 +28,7 @@ app.get('/health', async () => {
 })
 
 app.register(flows)
+app.register(bots)
 
 const port = env.PORT ? Number(env.PORT) : 3000
 

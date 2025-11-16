@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { FlowSchema, Flow } from '../flow/schema'
 import { randomUUID } from 'crypto'
+import { saveFlowRepo, getFlowRepo } from '../repo/flows'
 
 const store = new Map<string, Flow>()
 
@@ -55,8 +56,7 @@ export default async function routes(app: FastifyInstance) {
     if (!parsed.success) {
       return reply.code(400).send({ error: 'invalid_flow', details: parsed.error.flatten() })
     }
-    const id = randomUUID()
-    store.set(id, parsed.data)
+    const id = await saveFlowRepo((app as any).config.supabase, parsed.data)
     return { id }
   })
 
@@ -78,7 +78,7 @@ export default async function routes(app: FastifyInstance) {
     }
   }, async (req, reply) => {
     const id = (req.params as any).id as string
-    const flow = store.get(id)
+    const flow = await getFlowRepo((app as any).config.supabase, id)
     if (!flow) return reply.code(404).send({ error: 'not_found' })
     return flow
   })
