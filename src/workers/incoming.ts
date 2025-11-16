@@ -8,6 +8,7 @@ import { runFlow } from '../engine/runner'
 import { createMessage } from '../repo/messages'
 import { canSendMessage, recordSentMessage } from '../lib/limits'
 import { publish } from '../lib/pubsub'
+import { getState, setState } from '../repo/state'
 
 export function startIncomingWorker(app: any, env: Env) {
   const opts: RedisOptions | undefined = env.REDIS_URL ? { host: env.REDIS_URL } as any : undefined
@@ -17,10 +18,12 @@ export function startIncomingWorker(app: any, env: Env) {
     if (!conv) return
     const bot = await getBot(app.config.supabase, conv.bot_id)
     const flow = bot?.id ? await getLatestFlowByBotRepo(app.config.supabase, bot.id) : undefined
-    const out = await runFlow(flow, { text }, { env: app.config.env, supabase: app.config.supabase, bot_id: bot?.id })
+    const curState = await getState(app.config.supabase, conversation_id)
+    const out = await runFlow(flow, { text }, { env: app.config.env, supabase: app.config.supabase, bot_id: bot?.id }, { variables: curState?.variables, awaiting_var: curState?.awaiting_var, awaiting_node_id: curState?.awaiting_node_id })
     const ws = bot?.workspace_id as string | undefined
     if (ws && !canSendMessage(ws)) return
     await createMessage(app.config.supabase, { conversation_id, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
+    if (out.state) await setState(app.config.supabase, { conversation_id, bot_id: bot?.id, variables: out.state.variables ?? {}, awaiting_var: out.state.awaiting_var, awaiting_node_id: out.state.awaiting_node_id })
     if (ws) recordSentMessage(ws)
     publish(`conv:${conversation_id}`, { conversation_id, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
   }, { connection: opts as any })
