@@ -4,6 +4,7 @@ import { createConversation, getConversation, listConversations, updateConversat
 import { createMessage, listMessages } from '../repo/messages'
 import { getBot } from '../repo/bots'
 import { canSendMessage, recordSentMessage } from '../lib/limits'
+import { publish, subscribe } from '../lib/pubsub'
 
 const convCreate = z.object({ bot_id: z.string(), channel: z.string(), contact_identifier: z.string(), status: z.string().optional() })
 const msgCreate = z.object({ sender_type: z.enum(['user','bot','agent']), direction: z.enum(['incoming','outgoing']), channel: z.string(), content: z.string(), payload: z.any().optional() })
@@ -49,7 +50,22 @@ export default async function routes(app: FastifyInstance) {
       recordSentMessage(ws)
     }
     const m = await createMessage((app as any).config.supabase, { ...parsed.data, conversation_id: id, channel: conv.channel } as any)
+    publish(`conv:${id}`, m)
     return m
+  })
+
+  app.get('/conversations/:id/stream', { schema: { tags: ['conversations'] } }, async (req, reply) => {
+    const id = (req.params as any).id as string
+    reply.raw.setHeader('Content-Type', 'text/event-stream')
+    reply.raw.setHeader('Cache-Control', 'no-cache')
+    reply.raw.setHeader('Connection', 'keep-alive')
+    reply.raw.flushHeaders()
+    const off = subscribe(`conv:${id}`, data => {
+      reply.raw.write(`data: ${JSON.stringify(data)}\n\n`)
+    })
+    req.raw.on('close', () => {
+      off()
+    })
   })
 
   app.get('/conversations/:id/messages', { schema: { tags: ['messages'] } }, async (req) => {

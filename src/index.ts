@@ -13,6 +13,7 @@ import { buildSupabase } from './lib/supabase'
 import events from './routes/events'
 import { buildIncomingQueue } from './queues/incoming'
 import { startIncomingWorker } from './workers/incoming'
+import webhooks from './routes/webhooks'
 
 dotenv.config()
 
@@ -38,6 +39,7 @@ app.register(bots)
 app.register(events)
 app.register(conversations)
 app.register(workspaces)
+app.register(webhooks)
 
 const port = env.PORT ? Number(env.PORT) : 3000
 

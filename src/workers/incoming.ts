@@ -7,6 +7,7 @@ import { getLatestFlowByBotRepo } from '../repo/flows'
 import { runFlow } from '../engine/runner'
 import { createMessage } from '../repo/messages'
 import { canSendMessage, recordSentMessage } from '../lib/limits'
+import { publish } from '../lib/pubsub'
 
 export function startIncomingWorker(app: any, env: Env) {
   const opts: RedisOptions | undefined = env.REDIS_URL ? { host: env.REDIS_URL } as any : undefined
@@ -21,6 +22,7 @@ export function startIncomingWorker(app: any, env: Env) {
     if (ws && !canSendMessage(ws)) return
     await createMessage(app.config.supabase, { conversation_id, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
     if (ws) recordSentMessage(ws)
+    publish(`conv:${conversation_id}`, { conversation_id, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
   }, { connection: opts as any })
   return worker
 }
