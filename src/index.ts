@@ -2,6 +2,7 @@ import Fastify from 'fastify'
 import cors from '@fastify/cors'
 import { z } from 'zod'
 import dotenv from 'dotenv'
+import flows from './routes/flows'
 
 dotenv.config()
 
@@ -17,6 +18,8 @@ app.register(cors, { origin: true })
 app.get('/health', async () => {
   return { ok: true }
 })
+
+app.register(flows)
 
 const port = env.PORT ? Number(env.PORT) : 3000
 
