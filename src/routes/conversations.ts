@@ -2,6 +2,8 @@ import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { createConversation, getConversation, listConversations, updateConversation } from '../repo/conversations'
 import { createMessage, listMessages } from '../repo/messages'
+import { getBot } from '../repo/bots'
+import { canSendMessage, recordSentMessage } from '../lib/limits'
 
 const convCreate = z.object({ bot_id: z.string(), channel: z.string(), contact_identifier: z.string(), status: z.string().optional() })
 const msgCreate = z.object({ sender_type: z.enum(['user','bot','agent']), direction: z.enum(['incoming','outgoing']), channel: z.string(), content: z.string(), payload: z.any().optional() })
@@ -38,7 +40,15 @@ export default async function routes(app: FastifyInstance) {
     const id = (req.params as any).id as string
     const parsed = msgCreate.safeParse(req.body)
     if (!parsed.success) return reply.code(400).send({ error: 'invalid_message' })
-    const m = await createMessage((app as any).config.supabase, { ...parsed.data, conversation_id: id } as any)
+    const conv = await getConversation((app as any).config.supabase, id)
+    if (!conv) return reply.code(404).send({ error: 'conversation_not_found' })
+    const bot = await getBot((app as any).config.supabase, conv.bot_id)
+    const ws = bot?.workspace_id as string | undefined
+    if (parsed.data.direction === 'outgoing' && ws) {
+      if (!canSendMessage(ws)) return reply.code(429).send({ error: 'plan_limit_exceeded' })
+      recordSentMessage(ws)
+    }
+    const m = await createMessage((app as any).config.supabase, { ...parsed.data, conversation_id: id, channel: conv.channel } as any)
     return m
   })
 

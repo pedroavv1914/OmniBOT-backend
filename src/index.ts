@@ -7,6 +7,7 @@ import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import bots from './routes/bots'
 import conversations from './routes/conversations'
+import workspaces from './routes/workspaces'
 import { EnvSchema } from './lib/env'
 import { buildSupabase } from './lib/supabase'
 import events from './routes/events'
@@ -36,6 +37,7 @@ app.register(flows)
 app.register(bots)
 app.register(events)
 app.register(conversations)
+app.register(workspaces)
 
 const port = env.PORT ? Number(env.PORT) : 3000
 
