@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { FlowSchema, Flow } from '../flow/schema'
 import { randomUUID } from 'crypto'
-import { saveFlowRepo, getFlowRepo, getLatestFlowByBotRepo, publishFlowRepo } from '../repo/flows'
+import { saveFlowRepo, getFlowRepo, getLatestFlowByBotRepo, publishFlowRepo, listFlowsByBotRepo } from '../repo/flows'
 
 const store = new Map<string, Flow>()
 
@@ -123,5 +123,13 @@ export default async function routes(app: FastifyInstance) {
     const flowId = (req.body as any).id as string
     await publishFlowRepo((app as any).config.supabase, botId, flowId)
     return { ok: true }
+  })
+
+  app.get('/bots/:id/flows', {
+    schema: { tags: ['flows'], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'array' } } }
+  }, async (req) => {
+    const botId = (req.params as any).id as string
+    const list = await listFlowsByBotRepo((app as any).config.supabase, botId)
+    return list
   })
 }

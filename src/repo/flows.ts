@@ -42,8 +42,9 @@ export async function getLatestFlowByBotRepo(client: SupabaseClient | undefined,
   if (client) {
     const { data } = await client
       .from('bot_flows')
-      .select('flow_json, created_at')
+      .select('id, flow_json, created_at, status')
       .eq('bot_id', bot_id)
+      .order('status', { ascending: false })
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle()
@@ -63,4 +64,13 @@ export async function publishFlowRepo(client: SupabaseClient | undefined, bot_id
   const list = memoryByBot.get(bot_id) ?? []
   for (const s of list) s.status = s.id === id ? 'published' : 'draft'
   return true
+}
+
+export async function listFlowsByBotRepo(client: SupabaseClient | undefined, bot_id: string) {
+  if (client) {
+    const { data } = await client.from('bot_flows').select('id, created_at, status').eq('bot_id', bot_id).order('created_at', { ascending: false })
+    return data ?? []
+  }
+  const list = memoryByBot.get(bot_id) ?? []
+  return list.map(s => ({ id: s.id, created_at: s.created_at, status: s.status }))
 }
