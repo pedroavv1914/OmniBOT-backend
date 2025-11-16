@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { FlowSchema, Flow } from '../flow/schema'
 import { randomUUID } from 'crypto'
-import { saveFlowRepo, getFlowRepo } from '../repo/flows'
+import { saveFlowRepo, getFlowRepo, getLatestFlowByBotRepo } from '../repo/flows'
 
 const store = new Map<string, Flow>()
 
@@ -81,5 +81,33 @@ export default async function routes(app: FastifyInstance) {
     const flow = await getFlowRepo((app as any).config.supabase, id)
     if (!flow) return reply.code(404).send({ error: 'not_found' })
     return flow
+  })
+
+  app.get('/bots/:id/flow', {
+    schema: {
+      tags: ['flows'],
+      params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
+      response: { 200: { type: 'object' }, 404: { type: 'object' } }
+    }
+  }, async (req, reply) => {
+    const botId = (req.params as any).id as string
+    const flow = await getLatestFlowByBotRepo((app as any).config.supabase, botId)
+    if (!flow) return reply.code(404).send({ error: 'not_found' })
+    return flow
+  })
+
+  app.post('/bots/:id/flow', {
+    schema: {
+      tags: ['flows'],
+      params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
+      body: { type: 'object', properties: { nodes: { type: 'array' }, edges: { type: 'array' } }, required: ['nodes','edges'] },
+      response: { 200: { type: 'object', properties: { id: { type: 'string' } } } }
+    }
+  }, async (req) => {
+    const botId = (req.params as any).id as string
+    const parsed = FlowSchema.safeParse({ ...req.body, bot_id: botId })
+    if (!parsed.success) return { error: 'invalid_flow' }
+    const id = await saveFlowRepo((app as any).config.supabase, parsed.data)
+    return { id }
   })
 }
