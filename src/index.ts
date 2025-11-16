@@ -15,13 +15,16 @@ import { buildIncomingQueue } from './queues/incoming'
 import { startIncomingWorker } from './workers/incoming'
 import webhooks from './routes/webhooks'
 import stripeWebhook from './routes/stripe'
+import type { Queue } from 'bullmq'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 dotenv.config()
 
 const env = EnvSchema.parse(process.env)
 const app = Fastify({ logger: true })
-const queues = { incoming: buildIncomingQueue(env) }
-(app as any).config = { env, supabase: buildSupabase(env), queues }
+const queues: { incoming: Queue } = { incoming: buildIncomingQueue(env) as Queue }
+const supabase: SupabaseClient | undefined = buildSupabase(env)
+app.decorate('config', { env, supabase, queues })
 
 app.register(cors, { origin: true })
 app.register(swagger, {

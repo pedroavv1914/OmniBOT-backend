@@ -105,7 +105,7 @@ export default async function routes(app: FastifyInstance) {
     }
   }, async (req) => {
     const botId = (req.params as any).id as string
-    const parsed = FlowSchema.safeParse({ ...req.body, bot_id: botId })
+    const parsed = FlowSchema.safeParse({ ...(req.body as any), bot_id: botId })
     if (!parsed.success) return { error: 'invalid_flow' }
     const id = await saveFlowRepo((app as any).config.supabase, parsed.data)
     return { id }
