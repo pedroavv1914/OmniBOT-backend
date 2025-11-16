@@ -6,6 +6,7 @@ import flows from './routes/flows'
 import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import bots from './routes/bots'
+import conversations from './routes/conversations'
 import { EnvSchema } from './lib/env'
 import { buildSupabase } from './lib/supabase'
 
@@ -29,6 +30,7 @@ app.get('/health', async () => {
 
 app.register(flows)
 app.register(bots)
+app.register(conversations)
 
 const port = env.PORT ? Number(env.PORT) : 3000
 
