@@ -14,6 +14,7 @@ import events from './routes/events'
 import { buildIncomingQueue } from './queues/incoming'
 import { startIncomingWorker } from './workers/incoming'
 import webhooks from './routes/webhooks'
+import stripeWebhook from './routes/stripe'
 
 dotenv.config()
 
@@ -40,6 +41,7 @@ app.register(events)
 app.register(conversations)
 app.register(workspaces)
 app.register(webhooks)
+app.register(stripeWebhook)
 
 const port = env.PORT ? Number(env.PORT) : 3000
 
