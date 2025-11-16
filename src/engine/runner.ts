@@ -5,12 +5,15 @@ import { setTimeout as sleep } from 'timers/promises'
 // usando fetch nativo do Node 18+; caso falhe em tipos, mantemos any
 const doFetch: any = (globalThis as any).fetch
 
+export type FlowRunState = { variables?: Record<string, any>, awaiting_var?: string, awaiting_node_id?: string }
+export type RunResult = { content: string, state?: FlowRunState }
+
 export async function runFlow(
   flow: Flow | undefined,
   input: { text: string },
   ctx?: { env: any, supabase: any, bot_id?: string },
-  state?: { variables?: Record<string, any>, awaiting_var?: string, awaiting_node_id?: string }
-) {
+  state?: FlowRunState
+): Promise<RunResult> {
   if (!flow || flow.nodes.length === 0) return { content: `Ack: ${input.text}`, state }
   const vars = { ...(state?.variables ?? {}) }
   if (state?.awaiting_var && state.awaiting_node_id) {

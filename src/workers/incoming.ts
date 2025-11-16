@@ -4,7 +4,7 @@ import { RedisOptions } from 'ioredis'
 import { getConversation } from '../repo/conversations'
 import { getBot } from '../repo/bots'
 import { getLatestFlowByBotRepo } from '../repo/flows'
-import { runFlow } from '../engine/runner'
+import { runFlow, type FlowRunState } from '../engine/runner'
 import { createMessage } from '../repo/messages'
 import { canSendMessage, recordSentMessage } from '../lib/limits'
 import { publish } from '../lib/pubsub'
@@ -19,11 +19,12 @@ export function startIncomingWorker(app: any, env: Env) {
     const bot = await getBot(app.config.supabase, conv.bot_id)
     const flow = bot?.id ? await getLatestFlowByBotRepo(app.config.supabase, bot.id) : undefined
     const curState = await getState(app.config.supabase, conversation_id)
-    const out = await runFlow(flow, { text }, { env: app.config.env, supabase: app.config.supabase, bot_id: bot?.id }, { variables: curState?.variables, awaiting_var: curState?.awaiting_var, awaiting_node_id: curState?.awaiting_node_id })
+    const state: FlowRunState = { variables: curState?.variables, awaiting_var: curState?.awaiting_var, awaiting_node_id: curState?.awaiting_node_id }
+    const out = await runFlow(flow, { text }, { env: app.config.env, supabase: app.config.supabase, bot_id: bot?.id }, state)
     const ws = bot?.workspace_id as string | undefined
     if (ws && !canSendMessage(ws)) return
     await createMessage(app.config.supabase, { conversation_id, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
-    if (out.state) await setState(app.config.supabase, { conversation_id, bot_id: bot?.id, variables: out.state.variables ?? {}, awaiting_var: out.state.awaiting_var, awaiting_node_id: out.state.awaiting_node_id })
+    if (out.state) await setState(app.config.supabase, { conversation_id, bot_id: bot?.id, variables: out.state?.variables ?? {}, awaiting_var: out.state?.awaiting_var, awaiting_node_id: out.state?.awaiting_node_id })
     if (ws) recordSentMessage(ws)
     publish(`conv:${conversation_id}`, { conversation_id, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
   }, { connection: opts as any })
