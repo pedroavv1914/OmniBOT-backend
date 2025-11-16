@@ -1,8 +1,9 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { Flow } from '../flow/schema'
 
-const memory = new Map<string, Flow>()
-const memoryByBot = new Map<string, Flow>()
+type StoredFlow = { id: string, flow: Flow, created_at: string, status: 'draft' | 'published' }
+const memory = new Map<string, StoredFlow>()
+const memoryByBot = new Map<string, StoredFlow[]>()
 
 export async function saveFlowRepo(client: SupabaseClient | undefined, flow: Flow) {
   if (client) {
@@ -14,8 +15,13 @@ export async function saveFlowRepo(client: SupabaseClient | undefined, flow: Flo
     if (!error && data?.id) return data.id as string
   }
   const id = crypto.randomUUID()
-  memory.set(id, flow)
-  if (flow.bot_id) memoryByBot.set(flow.bot_id, flow)
+  const stored: StoredFlow = { id, flow, created_at: new Date().toISOString(), status: 'draft' }
+  memory.set(id, stored)
+  if (flow.bot_id) {
+    const list = memoryByBot.get(flow.bot_id) ?? []
+    list.unshift(stored)
+    memoryByBot.set(flow.bot_id, list)
+  }
   return id
 }
 
@@ -28,7 +34,8 @@ export async function getFlowRepo(client: SupabaseClient | undefined, id: string
       .single()
     if (data?.flow_json) return data.flow_json as Flow
   }
-  return memory.get(id)
+  const s = memory.get(id)
+  return s?.flow
 }
 
 export async function getLatestFlowByBotRepo(client: SupabaseClient | undefined, bot_id: string) {
@@ -42,5 +49,18 @@ export async function getLatestFlowByBotRepo(client: SupabaseClient | undefined,
       .maybeSingle()
     if (data?.flow_json) return data.flow_json as Flow
   }
-  return memoryByBot.get(bot_id)
+  const list = memoryByBot.get(bot_id) ?? []
+  const pub = list.find(f => f.status === 'published')
+  return (pub ?? list[0])?.flow
+}
+
+export async function publishFlowRepo(client: SupabaseClient | undefined, bot_id: string, id: string) {
+  if (client) {
+    await client.from('bot_flows').update({ status: 'published' }).eq('id', id).eq('bot_id', bot_id)
+    await client.from('bot_flows').update({ status: 'draft' }).eq('bot_id', bot_id).neq('id', id)
+    return true
+  }
+  const list = memoryByBot.get(bot_id) ?? []
+  for (const s of list) s.status = s.id === id ? 'published' : 'draft'
+  return true
 }

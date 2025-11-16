@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { FlowSchema, Flow } from '../flow/schema'
 import { randomUUID } from 'crypto'
-import { saveFlowRepo, getFlowRepo, getLatestFlowByBotRepo } from '../repo/flows'
+import { saveFlowRepo, getFlowRepo, getLatestFlowByBotRepo, publishFlowRepo } from '../repo/flows'
 
 const store = new Map<string, Flow>()
 
@@ -109,5 +109,19 @@ export default async function routes(app: FastifyInstance) {
     if (!parsed.success) return { error: 'invalid_flow' }
     const id = await saveFlowRepo((app as any).config.supabase, parsed.data)
     return { id }
+  })
+
+  app.post('/bots/:id/flow/publish', {
+    schema: {
+      tags: ['flows'],
+      params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
+      body: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
+      response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } } }
+    }
+  }, async (req) => {
+    const botId = (req.params as any).id as string
+    const flowId = (req.body as any).id as string
+    await publishFlowRepo((app as any).config.supabase, botId, flowId)
+    return { ok: true }
   })
 }
