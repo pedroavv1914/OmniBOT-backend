@@ -50,5 +50,6 @@ const port = env.PORT ? Number(env.PORT) : 3000
 
 app.listen({ port, host: '0.0.0.0' }).then(() => {
   app.log.info(`server ${port}`)
-  if (app.config.queues.incoming) startIncomingWorker(app, env)
+  const cfg = (app as any).config
+  if (cfg.queues.incoming) startIncomingWorker(app, env)
 })
