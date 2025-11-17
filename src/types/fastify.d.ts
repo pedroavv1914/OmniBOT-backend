@@ -7,7 +7,7 @@ declare module 'fastify' {
     config: {
       env: Env
       supabase?: SupabaseClient
-      queues: { incoming: Queue }
+      queues: { incoming: Queue | null }
     }
   }
 }

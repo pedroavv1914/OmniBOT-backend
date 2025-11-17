@@ -7,6 +7,7 @@ export default async function routes(app: FastifyInstance) {
   app.post('/events/incoming', { schema: { tags: ['events'] } }, async (req, reply) => {
     const parsed = incomingSchema.safeParse(req.body)
     if (!parsed.success) return reply.code(400).send({ error: 'invalid_event' })
+    if (!app.config.queues.incoming) return reply.code(503).send({ error: 'queue_unavailable' })
     await app.config.queues.incoming.add('incoming', parsed.data)
     return { ok: true }
   })

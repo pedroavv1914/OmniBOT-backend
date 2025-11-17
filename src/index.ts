@@ -22,7 +22,7 @@ dotenv.config()
 
 const env = EnvSchema.parse(process.env)
 const app = Fastify({ logger: true })
-const queues: { incoming: Queue } = { incoming: buildIncomingQueue(env) as Queue }
+const queues: { incoming: Queue | null } = { incoming: buildIncomingQueue(env) }
 const supabase: SupabaseClient | undefined = buildSupabase(env)
 app.decorate('config', { env, supabase, queues })
 
@@ -50,5 +50,5 @@ const port = env.PORT ? Number(env.PORT) : 3000
 
 app.listen({ port, host: '0.0.0.0' }).then(() => {
   app.log.info(`server ${port}`)
-  startIncomingWorker(app, env)
+  if (env.REDIS_URL) startIncomingWorker(app, env)
 })
