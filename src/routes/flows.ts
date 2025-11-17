@@ -7,6 +7,7 @@ const store = new Map<string, Flow>()
 
 export default async function routes(app: FastifyInstance) {
   app.post('/bot_flows', {
+    preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
       body: {
@@ -61,6 +62,7 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.get('/bot_flows/:id', {
+    preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
       params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
@@ -84,6 +86,7 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.get('/bots/:id/flow', {
+    preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
       params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
@@ -97,6 +100,7 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.post('/bots/:id/flow', {
+    preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
       params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
@@ -112,6 +116,7 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.post('/bots/:id/flow/publish', {
+    preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
       params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
@@ -126,6 +131,7 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.get('/bots/:id/flows', {
+    preHandler: (app as any).requireAuth,
     schema: { tags: ['flows'], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'array' } } }
   }, async (req) => {
     const botId = (req.params as any).id as string
