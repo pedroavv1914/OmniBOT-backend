@@ -12,6 +12,7 @@ import { getState, setState } from '../repo/state'
 
 export function startIncomingWorker(app: any, env: Env) {
   const opts: RedisOptions | undefined = env.REDIS_URL ? { host: env.REDIS_URL } as any : undefined
+  if (!opts) return null as any
   const worker = new Worker('incoming', async job => {
     const { conversation_id, text } = job.data as { conversation_id: string, text: string }
     const conv = await getConversation(app.config.supabase, conversation_id)

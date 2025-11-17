@@ -50,5 +50,5 @@ const port = env.PORT ? Number(env.PORT) : 3000
 
 app.listen({ port, host: '0.0.0.0' }).then(() => {
   app.log.info(`server ${port}`)
-  if (env.REDIS_URL) startIncomingWorker(app, env)
+  if (app.config.queues.incoming) startIncomingWorker(app, env)
 })
