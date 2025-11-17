@@ -50,15 +50,20 @@ app.register(stripeWebhook)
 const port = env.PORT ? Number(env.PORT) : 3000
 
 const requireAuth = async (req: any, reply: any) => {
-  const secret = (app as any).config.env.JWT_SECRET as string | undefined
-  if (!secret) return
   const h = req.headers?.authorization as string | undefined
-  if (!h || !h.startsWith('Bearer ')) return reply.code(401).send({ error: 'unauthorized' })
-  const token = h.slice(7)
-  try {
-    jwt.verify(token, secret)
-  } catch {
-    return reply.code(401).send({ error: 'invalid_token' })
+  const token = h?.startsWith('Bearer ') ? h.slice(7) : undefined
+  const secret = (app as any).config.env.JWT_SECRET as string | undefined
+  const supabase = (app as any).config.supabase
+  if (!secret && !supabase) return
+  if (!token) return reply.code(401).send({ error: 'unauthorized' })
+  if (secret) {
+    try { jwt.verify(token, secret) } catch { return reply.code(401).send({ error: 'invalid_token' }) }
+    return
+  }
+  if (supabase) {
+    const { data, error } = await supabase.auth.getUser(token)
+    if (error || !data?.user) return reply.code(401).send({ error: 'invalid_token' })
+    return
   }
 }
 app.decorate('requireAuth', requireAuth)
