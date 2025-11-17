@@ -2,7 +2,7 @@
   "name": "omnibotai-backend",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
     "dev": "ts-node --esm src/index.ts",
     "build": "tsc",
