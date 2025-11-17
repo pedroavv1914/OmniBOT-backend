@@ -9,5 +9,7 @@ declare module 'fastify' {
       supabase?: SupabaseClient
       queues: { incoming: Queue | null }
     }
+    requireAuth: any
   }
 }
+declare module 'jsonwebtoken'
