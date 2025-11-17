@@ -11,6 +11,7 @@ const createSchema = z.object({
 
 export default async function routes(app: FastifyInstance) {
   app.post('/bots', {
+    preHandler: (app as any).requireAuth,
     schema: {
       tags: ['bots'],
       body: { type: 'object', properties: { workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } }, required: ['workspace_id','name'] },
@@ -24,6 +25,7 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.get('/bots/:id', {
+    preHandler: (app as any).requireAuth,
     schema: { tags: ['bots'], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'object' }, 404: { type: 'object' } } }
   }, async (req, reply) => {
     const id = (req.params as any).id as string
@@ -33,6 +35,7 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.get('/bots', {
+    preHandler: (app as any).requireAuth,
     schema: { tags: ['bots'], querystring: { type: 'object', properties: { workspace_id: { type: 'string' } }, required: ['workspace_id'] }, response: { 200: { type: 'array' } } }
   }, async (req, reply) => {
     const ws = (req.query as any).workspace_id as string
@@ -41,6 +44,7 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.patch('/bots/:id', {
+    preHandler: (app as any).requireAuth,
     schema: { tags: ['bots'], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, body: { type: 'object' }, response: { 200: { type: 'object' } } }
   }, async (req) => {
     const id = (req.params as any).id as string
@@ -50,6 +54,7 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.delete('/bots/:id', {
+    preHandler: (app as any).requireAuth,
     schema: { tags: ['bots'], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } } } }
   }, async (req) => {
     const id = (req.params as any).id as string
