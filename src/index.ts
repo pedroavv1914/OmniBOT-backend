@@ -16,6 +16,7 @@ import { startIncomingWorker } from './workers/incoming'
 import webhooks from './routes/webhooks'
 import stripeWebhook from './routes/stripe'
 import type { Queue } from 'bullmq'
+const jwt: any = require('jsonwebtoken')
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 dotenv.config()
@@ -47,6 +48,20 @@ app.register(webhooks)
 app.register(stripeWebhook)
 
 const port = env.PORT ? Number(env.PORT) : 3000
+
+const requireAuth = async (req: any, reply: any) => {
+  const secret = (app as any).config.env.JWT_SECRET as string | undefined
+  if (!secret) return
+  const h = req.headers?.authorization as string | undefined
+  if (!h || !h.startsWith('Bearer ')) return reply.code(401).send({ error: 'unauthorized' })
+  const token = h.slice(7)
+  try {
+    jwt.verify(token, secret)
+  } catch {
+    return reply.code(401).send({ error: 'invalid_token' })
+  }
+}
+app.decorate('requireAuth', requireAuth)
 
 app.listen({ port, host: '0.0.0.0' }).then(() => {
   app.log.info(`server ${port}`)
