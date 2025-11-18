@@ -1,0 +1,21 @@
+version: "3.9"
+services:
+  api:
+    build: .
+    environment:
+      PORT: "3000"
+      JWT_SECRET: ${JWT_SECRET}
+      SUPABASE_URL: ${SUPABASE_URL}
+      SUPABASE_SERVICE_ROLE: ${SUPABASE_SERVICE_ROLE}
+      REDIS_URL: "redis"
+      STRIPE_API_KEY: ${STRIPE_API_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+    depends_on:
+      - redis
+    ports:
+      - "3000:3000"
+  redis:
+    image: redis:7
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"

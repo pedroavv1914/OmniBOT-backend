@@ -37,7 +37,8 @@ app.register(swagger, {
 app.register(swaggerUi, { routePrefix: '/docs' })
 
 app.get('/health', async () => {
-  return { ok: true }
+  const cfg = (app as any).config
+  return { ok: true, supabase: !!cfg.supabase, redis: !!cfg.queues.incoming }
 })
 
 app.register(flows)
