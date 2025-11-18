@@ -15,6 +15,7 @@ import { buildIncomingQueue } from './queues/incoming'
 import { startIncomingWorker } from './workers/incoming'
 import webhooks from './routes/webhooks'
 import stripeWebhook from './routes/stripe'
+import auth from './routes/auth'
 import type { Queue } from 'bullmq'
 const jwt: any = require('jsonwebtoken')
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -46,6 +47,7 @@ app.register(conversations)
 app.register(workspaces)
 app.register(webhooks)
 app.register(stripeWebhook)
+app.register(auth)
 
 const port = env.PORT ? Number(env.PORT) : 3000
 
