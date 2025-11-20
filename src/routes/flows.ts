@@ -10,6 +10,7 @@ export default async function routes(app: FastifyInstance) {
     preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
+      security: [{ bearerAuth: [] }],
       body: {
         type: 'object',
         properties: {
@@ -65,6 +66,7 @@ export default async function routes(app: FastifyInstance) {
     preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
+      security: [{ bearerAuth: [] }],
       params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
       response: {
         200: {
@@ -89,6 +91,7 @@ export default async function routes(app: FastifyInstance) {
     preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
+      security: [{ bearerAuth: [] }],
       params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
       response: { 200: { type: 'object' }, 404: { type: 'object' } }
     }
@@ -103,6 +106,7 @@ export default async function routes(app: FastifyInstance) {
     preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
+      security: [{ bearerAuth: [] }],
       params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
       body: { type: 'object', properties: { nodes: { type: 'array' }, edges: { type: 'array' } }, required: ['nodes','edges'] },
       response: { 200: { type: 'object', properties: { id: { type: 'string' } } } }
@@ -119,6 +123,7 @@ export default async function routes(app: FastifyInstance) {
     preHandler: (app as any).requireAuth,
     schema: {
       tags: ['flows'],
+      security: [{ bearerAuth: [] }],
       params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
       body: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
       response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } } }
@@ -132,7 +137,7 @@ export default async function routes(app: FastifyInstance) {
 
   app.get('/bots/:id/flows', {
     preHandler: (app as any).requireAuth,
-    schema: { tags: ['flows'], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'array' } } }
+    schema: { tags: ['flows'], security: [{ bearerAuth: [] }], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'array' } } }
   }, async (req) => {
     const botId = (req.params as any).id as string
     const list = await listFlowsByBotRepo((app as any).config.supabase, botId)
