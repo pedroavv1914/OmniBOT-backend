@@ -31,12 +31,18 @@ app.decorate('config', { env, supabase, queues })
 app.register(cors, { origin: true })
 app.register(swagger, {
   openapi: {
-    info: { title: 'OmniBOT API', version: '0.1.0' }
+    info: { title: 'OmniBOT API', version: '0.1.0' },
+    components: {
+      securitySchemes: {
+        bearerAuth: { type: 'http', scheme: 'bearer', bearerFormat: 'JWT' }
+      }
+    },
+    security: [{ bearerAuth: [] }]
   }
 })
 app.register(swaggerUi, { routePrefix: '/docs' })
 
-app.get('/health', async () => {
+app.get('/health', { schema: { security: [] } }, async () => {
   const cfg = (app as any).config
   return { ok: true, supabase: !!cfg.supabase, redis: !!cfg.queues.incoming }
 })
