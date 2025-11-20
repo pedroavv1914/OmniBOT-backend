@@ -1,5 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
+import { createUser } from '../repo/users'
 const jwt: any = require('jsonwebtoken')
 
 export default async function routes(app: FastifyInstance) {
@@ -42,12 +43,14 @@ export default async function routes(app: FastifyInstance) {
       const { data, error } = await supabase.auth.signUp({ email, password })
       if (error) return reply.code(400).send({ error: 'signup_failed', details: error.message })
       const t = data?.session?.access_token
+      if (data?.user?.id) await createUser(supabase, { auth_user_id: data.user.id, email })
       if (t) return { token: t }
       return { user_id: data?.user?.id }
     }
     if (secret) {
       const sub = email || username || 'dev-user'
       const token = jwt.sign({ sub }, secret, { expiresIn: '24h' })
+      await createUser(undefined, { auth_user_id: sub, email, username })
       return { token }
     }
     return reply.code(400).send({ error: 'auth_not_configured' })
