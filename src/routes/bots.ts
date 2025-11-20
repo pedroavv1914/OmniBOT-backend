@@ -14,6 +14,7 @@ export default async function routes(app: FastifyInstance) {
     preHandler: (app as any).requireAuth,
     schema: {
       tags: ['bots'],
+      security: [{ bearerAuth: [] }],
       body: { type: 'object', properties: { workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } }, required: ['workspace_id','name'] },
       response: { 200: { type: 'object', properties: { id: { type: 'string' }, workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } } } }
     }
@@ -26,7 +27,7 @@ export default async function routes(app: FastifyInstance) {
 
   app.get('/bots/:id', {
     preHandler: (app as any).requireAuth,
-    schema: { tags: ['bots'], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'object', properties: { id: { type: 'string' }, workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } } }, 404: { type: 'object' } } }
+    schema: { tags: ['bots'], security: [{ bearerAuth: [] }], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'object', properties: { id: { type: 'string' }, workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } } }, 404: { type: 'object' } } }
   }, async (req, reply) => {
     const id = (req.params as any).id as string
     const bot = await getBot((app as any).config.supabase, id)
@@ -36,7 +37,7 @@ export default async function routes(app: FastifyInstance) {
 
   app.get('/bots', {
     preHandler: (app as any).requireAuth,
-    schema: { tags: ['bots'], querystring: { type: 'object', properties: { workspace_id: { type: 'string' } }, required: ['workspace_id'] }, response: { 200: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } } } } } }
+    schema: { tags: ['bots'], security: [{ bearerAuth: [] }], querystring: { type: 'object', properties: { workspace_id: { type: 'string' } }, required: ['workspace_id'] }, response: { 200: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } } } } } }
   }, async (req, reply) => {
     const ws = (req.query as any).workspace_id as string
     const bots = await listBots((app as any).config.supabase, ws)
@@ -45,7 +46,7 @@ export default async function routes(app: FastifyInstance) {
 
   app.patch('/bots/:id', {
     preHandler: (app as any).requireAuth,
-    schema: { tags: ['bots'], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, body: { type: 'object' }, response: { 200: { type: 'object', properties: { id: { type: 'string' }, workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } } } } }
+    schema: { tags: ['bots'], security: [{ bearerAuth: [] }], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, body: { type: 'object' }, response: { 200: { type: 'object', properties: { id: { type: 'string' }, workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } } } } }
   }, async (req) => {
     const id = (req.params as any).id as string
     const patch = req.body as any
@@ -55,7 +56,7 @@ export default async function routes(app: FastifyInstance) {
 
   app.delete('/bots/:id', {
     preHandler: (app as any).requireAuth,
-    schema: { tags: ['bots'], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } } } }
+    schema: { tags: ['bots'], security: [{ bearerAuth: [] }], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, response: { 200: { type: 'object', properties: { ok: { type: 'boolean' } } } } }
   }, async (req) => {
     const id = (req.params as any).id as string
     const ok = await deleteBot((app as any).config.supabase, id)
