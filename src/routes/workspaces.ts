@@ -1,6 +1,6 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
-import { setWorkspacePlan } from '../lib/limits'
+import { setWorkspacePlan, getWorkspaceUsage } from '../lib/limits'
 
 const planSchema = z.object({ plan: z.enum(['free','pro','enterprise']) })
 
@@ -11,5 +11,9 @@ export default async function routes(app: FastifyInstance) {
     if (!parsed.success) return reply.code(400).send({ error: 'invalid_plan' })
     setWorkspacePlan(id, parsed.data.plan)
     return { ok: true }
+  })
+  app.get('/workspaces/:id/usage', { schema: { tags: ['workspaces'] } }, async (req) => {
+    const id = (req.params as any).id as string
+    return getWorkspaceUsage(id)
   })
 }
