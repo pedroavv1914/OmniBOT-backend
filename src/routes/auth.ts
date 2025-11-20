@@ -30,4 +30,26 @@ export default async function routes(app: FastifyInstance) {
     }
     return reply.code(400).send({ error: 'auth_not_configured' })
   })
+
+  const registerSchema = z.object({ email: z.string().email().optional(), username: z.string().optional(), password: z.string() })
+  app.post('/auth/register', { schema: { tags: ['auth'], security: [] } }, async (req, reply) => {
+    const parsed = registerSchema.safeParse(req.body)
+    if (!parsed.success) return reply.code(400).send({ error: 'invalid_payload' })
+    const { email, username, password } = parsed.data
+    const supabase = (app as any).config.supabase
+    const secret = (app as any).config.env.JWT_SECRET as string | undefined
+    if (supabase && email) {
+      const { data, error } = await supabase.auth.signUp({ email, password })
+      if (error) return reply.code(400).send({ error: 'signup_failed', details: error.message })
+      const t = data?.session?.access_token
+      if (t) return { token: t }
+      return { user_id: data?.user?.id }
+    }
+    if (secret) {
+      const sub = email || username || 'dev-user'
+      const token = jwt.sign({ sub }, secret, { expiresIn: '24h' })
+      return { token }
+    }
+    return reply.code(400).send({ error: 'auth_not_configured' })
+  })
 }
