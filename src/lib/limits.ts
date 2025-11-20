@@ -30,3 +30,10 @@ export function recordSentMessage(workspace_id: string) {
   cur.count += 1
   usage.set(workspace_id, cur)
 }
+
+export function getWorkspaceUsage(workspace_id: string) {
+  const period = new Date().toISOString().slice(0,7)
+  const cur = usage.get(workspace_id) ?? { plan: 'free' as Plan, count: 0, period }
+  const limit = limits[cur.plan].max_messages_month
+  return { plan: cur.plan, count: cur.count, limit, period: cur.period }
+}
