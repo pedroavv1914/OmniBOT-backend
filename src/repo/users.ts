@@ -13,7 +13,7 @@ const mem = new Map<string, AppUser>()
 
 export async function createUser(client: SupabaseClient | undefined, u: AppUser) {
   if (client) {
-    const { data, error } = await client.from('users').insert(u).select('*').single()
+    const { data, error } = await client.from('users').upsert(u as any, { onConflict: 'auth_user_id' }).select('*').maybeSingle()
     if (!error && data) return data as AppUser
   }
   const id = crypto.randomUUID()
