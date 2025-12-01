@@ -29,8 +29,8 @@ export default async function routes(app: FastifyInstance) {
         }
         return reply.code(401).send({ error: 'invalid_credentials', details: error?.message })
       }
-      if (secret && cleanEmail) {
-        const token = jwt.sign({ sub: cleanEmail }, secret, { expiresIn: '24h' })
+      if (secret && data?.user?.id) {
+        const token = jwt.sign({ sub: data.user.id }, secret, { expiresIn: '24h' })
         return { token }
       }
       return { token: t }
