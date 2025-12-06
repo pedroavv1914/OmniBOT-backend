@@ -59,6 +59,23 @@ create table if not exists ai_logs (
   created_at timestamptz default now()
 );
 
+create table if not exists workspace_usage (
+  workspace_id text not null,
+  period text not null,
+  plan text not null default 'free',
+  count integer not null default 0,
+  primary key (workspace_id, period)
+);
+
+create table if not exists ai_logs (
+  id uuid primary key default gen_random_uuid(),
+  bot_id uuid not null,
+  message_input text not null,
+  ai_response text not null,
+  tokens integer default 0,
+  created_at timestamptz default now()
+);
+
 create table if not exists conversation_states (
   conversation_id uuid primary key,
   bot_id uuid,
@@ -90,6 +107,7 @@ alter table bot_flows enable row level security;
 alter table conversations enable row level security;
 alter table messages enable row level security;
 alter table ai_logs enable row level security;
+alter table workspace_usage enable row level security;
 alter table conversation_states enable row level security;
 alter table subscriptions enable row level security;
 
