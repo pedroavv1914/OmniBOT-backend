@@ -30,14 +30,14 @@ export default async function routes(app: FastifyInstance) {
         const workspace_id = (sub.metadata as any)?.workspace_id as string | undefined
         const priceId = sub.items?.data?.[0]?.price?.id
         const plan = planFromMetadata(sub.metadata) || planFromPrice((app as any).config.env, priceId) || 'free'
-        if (workspace_id) setWorkspacePlan(workspace_id, plan as any)
+        if (workspace_id) await setWorkspacePlan((app as any).config.supabase, workspace_id, plan as any)
         break
       }
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session
         const workspace_id = (session.metadata as any)?.workspace_id as string | undefined
         const plan = planFromMetadata(session.metadata) || 'free'
-        if (workspace_id) setWorkspacePlan(workspace_id, plan as any)
+        if (workspace_id) await setWorkspacePlan((app as any).config.supabase, workspace_id, plan as any)
         break
       }
       default:
