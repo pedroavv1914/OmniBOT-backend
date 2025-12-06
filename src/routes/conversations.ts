@@ -47,8 +47,8 @@ export default async function routes(app: FastifyInstance) {
     const bot = await getBot((app as any).config.supabase, conv.bot_id)
     const ws = bot?.workspace_id as string | undefined
     if (parsed.data.direction === 'outgoing' && ws) {
-      if (!canSendMessage(ws)) return reply.code(429).send({ error: 'plan_limit_exceeded' })
-      recordSentMessage(ws)
+      if (!(await canSendMessage((app as any).config.supabase, ws))) return reply.code(429).send({ error: 'plan_limit_exceeded' })
+      await recordSentMessage((app as any).config.supabase, ws)
     }
     const m = await createMessage((app as any).config.supabase, { ...parsed.data, conversation_id: id, channel: conv.channel } as any)
     publish(`conv:${id}`, m)
