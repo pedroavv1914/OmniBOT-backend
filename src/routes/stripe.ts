@@ -2,9 +2,31 @@ import { FastifyInstance } from 'fastify'
 import Stripe from 'stripe'
 import { setWorkspacePlan } from '../lib/limits'
 import { planFromPrice, planFromMetadata } from '../lib/stripePlan'
+import { z } from 'zod'
 
 export default async function routes(app: FastifyInstance) {
   const stripe = new Stripe(process.env.STRIPE_API_KEY || '', { apiVersion: '2023-10-16' })
+
+  app.post('/stripe/checkout', { preHandler: (app as any).requireAuth, schema: { tags: ['billing'], security: [{ bearerAuth: [] }] } }, async (req, reply) => {
+    const body = z.object({ workspace_id: z.string(), plan: z.enum(['pro','enterprise']), success_url: z.string().url(), cancel_url: z.string().url() }).safeParse(req.body)
+    if (!body.success) return reply.code(400).send({ error: 'invalid_payload' })
+    const { workspace_id, plan, success_url, cancel_url } = body.data
+    const env = (app as any).config.env
+    const price = plan === 'pro' ? env.STRIPE_PRICE_PRO : env.STRIPE_PRICE_ENTERPRISE
+    if (!price) return reply.code(400).send({ error: 'price_not_configured' })
+    try {
+      const session = await stripe.checkout.sessions.create({
+        mode: 'subscription',
+        line_items: [{ price, quantity: 1 }],
+        success_url,
+        cancel_url,
+        metadata: { workspace_id, plan }
+      })
+      return { id: session.id, url: (session as any).url }
+    } catch (e: any) {
+      return reply.code(500).send({ error: 'checkout_failed', details: e?.message })
+    }
+  })
 
   app.post('/stripe/webhook', { schema: { tags: ['billing'] } }, async (req, reply) => {
     let event: Stripe.Event | undefined
