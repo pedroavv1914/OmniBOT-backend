@@ -9,11 +9,11 @@ export default async function routes(app: FastifyInstance) {
     const id = (req.params as any).id as string
     const parsed = planSchema.safeParse(req.body)
     if (!parsed.success) return reply.code(400).send({ error: 'invalid_plan' })
-    setWorkspacePlan(id, parsed.data.plan)
+    await setWorkspacePlan((app as any).config.supabase, id, parsed.data.plan)
     return { ok: true }
   })
   app.get('/workspaces/:id/usage', { schema: { tags: ['workspaces'] } }, async (req) => {
     const id = (req.params as any).id as string
-    return getWorkspaceUsage(id)
+    return await getWorkspaceUsage((app as any).config.supabase, id)
   })
 }
