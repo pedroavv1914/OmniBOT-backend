@@ -22,3 +22,35 @@ export async function listWorkspacesByOwner(client: SupabaseClient | undefined, 
   }
   return Array.from(mem.values()).filter(w => w.owner_id === owner_id)
 }
+
+export async function getWorkspaceById(client: SupabaseClient | undefined, id: string) {
+  if (client) {
+    const { data } = await client.from('workspaces').select('*').eq('id', id).maybeSingle()
+    return (data ?? null) as Workspace | null
+  }
+  return mem.get(id) ?? null
+}
+
+export async function addMember(client: SupabaseClient | undefined, workspace_id: string, user_id: string, role: string) {
+  if (client) {
+    const { data, error } = await client.from('workspace_members').upsert({ workspace_id, user_id, role }).select('*').single()
+    if (!error) return data
+  }
+  return { workspace_id, user_id, role }
+}
+
+export async function listMembers(client: SupabaseClient | undefined, workspace_id: string) {
+  if (client) {
+    const { data } = await client.from('workspace_members').select('*').eq('workspace_id', workspace_id)
+    return (data ?? [])
+  }
+  return []
+}
+
+export async function removeMember(client: SupabaseClient | undefined, workspace_id: string, user_id: string) {
+  if (client) {
+    await client.from('workspace_members').delete().eq('workspace_id', workspace_id).eq('user_id', user_id)
+    return { ok: true }
+  }
+  return { ok: true }
+}
