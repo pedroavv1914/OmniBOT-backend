@@ -26,8 +26,14 @@ export default async function routes(app: FastifyInstance) {
   })
 
   app.get('/conversations', { preHandler: (app as any).requireAuth, schema: { tags: ['conversations'], security: [{ bearerAuth: [] }] } }, async (req) => {
-    const bot_id = (req.query as any).bot_id as string | undefined
-    const list = await listConversations((app as any).config.supabase, bot_id)
+    const q = req.query as any
+    const list = await listConversations((app as any).config.supabase, {
+      bot_id: q.bot_id,
+      workspace_id: q.workspace_id,
+      limit: q.limit ? parseInt(q.limit) : undefined,
+      offset: q.offset ? parseInt(q.offset) : undefined,
+      status: q.status
+    })
     return list
   })
 
@@ -57,6 +63,8 @@ export default async function routes(app: FastifyInstance) {
 
   app.get('/conversations/:id/stream', { schema: { tags: ['conversations'] } }, async (req, reply) => {
     const id = (req.params as any).id as string
+    reply.header('Access-Control-Allow-Origin', '*')
+    reply.header('Access-Control-Allow-Headers', 'authorization, content-type')
     reply.raw.setHeader('Content-Type', 'text/event-stream')
     reply.raw.setHeader('Cache-Control', 'no-cache')
     reply.raw.setHeader('Connection', 'keep-alive')
