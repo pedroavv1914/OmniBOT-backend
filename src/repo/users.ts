@@ -32,6 +32,15 @@ export async function getUserByAuthId(client: SupabaseClient | undefined, auth_u
   return null
 }
 
+export async function getUserByEmail(client: SupabaseClient | undefined, email: string) {
+  if (client) {
+    const { data } = await client.from('users').select('*').eq('email', email).maybeSingle()
+    return (data ?? null) as AppUser | null
+  }
+  for (const v of mem.values()) if (v.email === email) return v
+  return null
+}
+
 export async function updateUserByAuthId(client: SupabaseClient | undefined, auth_user_id: string, patch: Partial<AppUser>) {
   if (client) {
     const { data } = await client.from('users').update(patch as any).eq('auth_user_id', auth_user_id).select('*').maybeSingle()
