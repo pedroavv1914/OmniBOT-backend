@@ -64,6 +64,10 @@ export default async function routes(app: FastifyInstance) {
       const t = data?.session?.access_token
       if (data?.user?.id) await createUser(supabase, { auth_user_id: data.user.id, email: cleanEmail, username: cleanUsername })
       if (t) return { token: t }
+      if (secret && data?.user?.id) {
+        const token = jwt.sign({ sub: data.user.id }, secret, { expiresIn: '24h' })
+        return { token }
+      }
       return { user_id: data?.user?.id }
     }
     if (secret) {
