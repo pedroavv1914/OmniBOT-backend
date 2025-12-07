@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { setWorkspacePlan, getWorkspaceUsage } from '../lib/limits'
-import { createWorkspace, listWorkspacesByOwner, getWorkspaceById, addMember, listMembers, removeMember } from '../repo/workspaces'
+import { createWorkspace, listWorkspacesByOwner, getWorkspaceById, addMember, listMembers, removeMember, updateWorkspaceName, deleteWorkspace } from '../repo/workspaces'
 import { getUserByEmail } from '../repo/users'
 const jwt: any = require('jsonwebtoken')
 
@@ -114,6 +114,49 @@ export default async function routes(app: FastifyInstance) {
     }
     if (!requester || requester !== w.owner_id) return reply.code(403).send({ error: 'forbidden' })
     await removeMember(supabase, id, user_id)
+    return { ok: true }
+  })
+
+  app.patch('/workspaces/:id', { preHandler: (app as any).requireAuth, schema: { tags: ['workspaces'], security: [{ bearerAuth: [] }], body: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] } } }, async (req, reply) => {
+    const id = (req.params as any).id as string
+    const supabase = (app as any).config.supabase
+    const w = await getWorkspaceById(supabase, id)
+    if (!w) return reply.code(404).send({ error: 'workspace_not_found' })
+    const h = req.headers?.authorization as string | undefined
+    const token = h?.startsWith('Bearer ') ? h.slice(7) : undefined
+    const secret = (app as any).config.env.JWT_SECRET as string | undefined
+    let requester: string | undefined
+    if (secret && token) {
+      try { const d = jwt.verify(token, secret); requester = (d as any)?.sub as string | undefined } catch {}
+    }
+    if (!requester && supabase && token) {
+      const { data } = await supabase.auth.getUser(token)
+      requester = data?.user?.id
+    }
+    if (!requester || requester !== w.owner_id) return reply.code(403).send({ error: 'forbidden' })
+    const name = (req.body as any).name as string
+    const upd = await updateWorkspaceName(supabase, id, name)
+    return upd ?? { ok: true }
+  })
+
+  app.delete('/workspaces/:id', { preHandler: (app as any).requireAuth, schema: { tags: ['workspaces'], security: [{ bearerAuth: [] }] } }, async (req, reply) => {
+    const id = (req.params as any).id as string
+    const supabase = (app as any).config.supabase
+    const w = await getWorkspaceById(supabase, id)
+    if (!w) return reply.code(404).send({ error: 'workspace_not_found' })
+    const h = req.headers?.authorization as string | undefined
+    const token = h?.startsWith('Bearer ') ? h.slice(7) : undefined
+    const secret = (app as any).config.env.JWT_SECRET as string | undefined
+    let requester: string | undefined
+    if (secret && token) {
+      try { const d = jwt.verify(token, secret); requester = (d as any)?.sub as string | undefined } catch {}
+    }
+    if (!requester && supabase && token) {
+      const { data } = await supabase.auth.getUser(token)
+      requester = data?.user?.id
+    }
+    if (!requester || requester !== w.owner_id) return reply.code(403).send({ error: 'forbidden' })
+    await deleteWorkspace(supabase, id)
     return { ok: true }
   })
 }
