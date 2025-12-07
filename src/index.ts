@@ -79,6 +79,14 @@ const requireAuth = async (req: any, reply: any) => {
 }
 app.decorate('requireAuth', requireAuth)
 
+app.setErrorHandler(async (err, req, reply) => {
+  app.log.error({ msg: 'request_error', url: req.url, method: req.method, params: req.params, query: req.query, body: req.body, err })
+  if (!reply.sent) reply.code(500).send({ error: 'internal_error' })
+})
+app.addHook('onResponse', async (req, reply) => {
+  app.log.info({ msg: 'response', url: req.url, method: req.method, statusCode: reply.statusCode })
+})
+
 app.listen({ port, host: '0.0.0.0' }).then(() => {
   app.log.info(`server ${port}`)
   const cfg = (app as any).config
