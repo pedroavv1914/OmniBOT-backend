@@ -54,3 +54,25 @@ export async function removeMember(client: SupabaseClient | undefined, workspace
   }
   return { ok: true }
 }
+
+export async function updateWorkspaceName(client: SupabaseClient | undefined, id: string, name: string) {
+  if (client) {
+    const { data } = await client.from('workspaces').update({ name }).eq('id', id).select('*').maybeSingle()
+    return (data ?? null) as Workspace | null
+  }
+  const w = mem.get(id)
+  if (!w) return null
+  const upd = { ...w, name }
+  mem.set(id, upd)
+  return upd
+}
+
+export async function deleteWorkspace(client: SupabaseClient | undefined, id: string) {
+  if (client) {
+    await client.from('workspace_members').delete().eq('workspace_id', id)
+    await client.from('workspaces').delete().eq('id', id)
+    return { ok: true }
+  }
+  mem.delete(id)
+  return { ok: true }
+}
