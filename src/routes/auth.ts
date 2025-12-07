@@ -23,10 +23,6 @@ export default async function routes(app: FastifyInstance) {
       const { data, error } = await supabase.auth.signInWithPassword({ email: cleanEmail, password })
       const t = data?.session?.access_token
       if (error || !t) {
-        if (secret && cleanEmail) {
-          const token = jwt.sign({ sub: cleanEmail }, secret, { expiresIn: '24h' })
-          return { token }
-        }
         return reply.code(401).send({ error: 'invalid_credentials', details: error?.message })
       }
       if (secret && data?.user?.id) {
