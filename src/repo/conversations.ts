@@ -71,3 +71,12 @@ export async function updateConversation(client: SupabaseClient | undefined, id:
   convMem.set(id, upd)
   return upd
 }
+
+export async function findConversationByBotContact(client: SupabaseClient | undefined, bot_id: string, contact_identifier: string) {
+  if (client) {
+    const { data } = await client.from('conversations').select('*').eq('bot_id', bot_id).eq('contact_identifier', contact_identifier).maybeSingle()
+    return (data ?? null) as Conversation | null
+  }
+  for (const v of convMem.values()) if (v.bot_id === bot_id && v.contact_identifier === contact_identifier) return v
+  return null
+}
