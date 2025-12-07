@@ -78,4 +78,18 @@ export default async function routes(app: FastifyInstance) {
     }
     return reply.code(400).send({ error: 'auth_not_configured' })
   })
+
+  const resetSchema = z.object({ email: z.string().email(), redirectTo: z.string().url().optional() })
+  app.post('/auth/reset-password', { schema: { tags: ['auth'], description: 'Solicita reset de senha por e-mail (Supabase)', security: [], body: { type: 'object', properties: { email: { type: 'string' }, redirectTo: { type: 'string' } }, required: ['email'] } } }, async (req, reply) => {
+    const parsed = resetSchema.safeParse(req.body)
+    if (!parsed.success) return reply.code(400).send({ error: 'invalid_payload' })
+    const { email, redirectTo } = parsed.data
+    const supabase = (app as any).config.supabase
+    if (!supabase) return reply.code(400).send({ error: 'auth_not_configured' })
+    const opts: any = {}
+    if (redirectTo) opts.redirectTo = redirectTo
+    const { error } = await supabase.auth.resetPasswordForEmail(email, opts)
+    if (error) return reply.code(400).send({ error: 'reset_failed', details: error.message })
+    return { ok: true }
+  })
 }
