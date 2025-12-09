@@ -84,21 +84,6 @@ create table if not exists conversation_states (
   awaiting_node_id text
 );
 
-create table if not exists plans (
-  id uuid primary key default gen_random_uuid(),
-  name text not null,
-  limits jsonb not null
-);
-
-create table if not exists subscriptions (
-  id uuid primary key default gen_random_uuid(),
-  workspace_id uuid not null,
-  plan_id uuid,
-  stripe_customer_id text,
-  stripe_subscription_id text,
-  status text,
-  current_period_end timestamptz
-);
 
 alter table workspaces enable row level security;
 alter table workspace_members enable row level security;
@@ -109,7 +94,6 @@ alter table messages enable row level security;
 alter table ai_logs enable row level security;
 alter table workspace_usage enable row level security;
 alter table conversation_states enable row level security;
-alter table subscriptions enable row level security;
 
 create policy select_workspace on workspaces for select using (
   exists (select 1 from workspace_members wm where wm.workspace_id = workspaces.id and wm.user_id = auth.uid())
@@ -162,11 +146,5 @@ create policy select_conv_states on conversation_states for select using (
     join bots b on b.id = c.bot_id
     join workspace_members wm on wm.workspace_id = b.workspace_id
     where c.id = conversation_states.conversation_id and wm.user_id = auth.uid()
-  )
-);
-
-create policy select_subscriptions on subscriptions for select using (
-  exists (
-    select 1 from workspace_members wm where wm.workspace_id = subscriptions.workspace_id and wm.user_id = auth.uid()
   )
 );
