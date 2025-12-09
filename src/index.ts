@@ -14,7 +14,6 @@ import events from './routes/events'
 import { buildIncomingQueue } from './queues/incoming'
 import { startIncomingWorker } from './workers/incoming'
 import webhooks from './routes/webhooks'
-import stripeWebhook from './routes/stripe'
 import auth from './routes/auth'
 import users from './routes/users'
 import type { Queue } from 'bullmq'
@@ -54,7 +53,6 @@ app.register(events)
 app.register(conversations)
 app.register(workspaces)
 app.register(webhooks)
-app.register(stripeWebhook)
 app.register(auth)
 app.register(users)
 
