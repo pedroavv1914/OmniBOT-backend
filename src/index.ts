@@ -7,7 +7,6 @@ import swagger from '@fastify/swagger'
 import swaggerUi from '@fastify/swagger-ui'
 import bots from './routes/bots'
 import conversations from './routes/conversations'
-import workspaces from './routes/workspaces'
 import { EnvSchema } from './lib/env'
 import { buildSupabase } from './lib/supabase'
 import events from './routes/events'
@@ -16,6 +15,7 @@ import { startIncomingWorker } from './workers/incoming'
 import webhooks from './routes/webhooks'
 import auth from './routes/auth'
 import users from './routes/users'
+import numbers from './routes/numbers'
 import type { Queue } from 'bullmq'
 const jwt: any = require('jsonwebtoken')
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -51,10 +51,10 @@ app.register(flows)
 app.register(bots)
 app.register(events)
 app.register(conversations)
-app.register(workspaces)
 app.register(webhooks)
 app.register(auth)
 app.register(users)
+app.register(numbers)
 
 const port = env.PORT ? Number(env.PORT) : 3000
 
