@@ -16,6 +16,7 @@ import webhooks from './routes/webhooks'
 import auth from './routes/auth'
 import users from './routes/users'
 import numbers from './routes/numbers'
+import whatsapp from './routes/whatsapp'
 import type { Queue } from 'bullmq'
 const jwt: any = require('jsonwebtoken')
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -55,6 +56,7 @@ app.register(webhooks)
 app.register(auth)
 app.register(users)
 app.register(numbers)
+app.register(whatsapp)
 
 const port = env.PORT ? Number(env.PORT) : 3000
 
