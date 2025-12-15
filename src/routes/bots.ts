@@ -3,10 +3,11 @@ import { z } from 'zod'
 import { createBot, getBot, listBots, updateBot, deleteBot } from '../repo/bots'
 
 const createSchema = z.object({
-  workspace_id: z.string(),
+  owner_id: z.string(),
   name: z.string(),
   description: z.string().optional(),
-  is_active: z.boolean().optional()
+  is_active: z.boolean().optional(),
+  phone_number: z.string().optional()
 })
 
 export default async function routes(app: FastifyInstance) {
@@ -22,7 +23,7 @@ export default async function routes(app: FastifyInstance) {
     const parsed = createSchema.safeParse(req.body)
     if (!parsed.success) return reply.code(400).send({ error: 'invalid_bot' })
     const bot = await createBot((app as any).config.supabase, parsed.data as any)
-    return { id: (bot as any).id, workspace_id: (bot as any).workspace_id, name: (bot as any).name, description: (bot as any).description, is_active: (bot as any).is_active }
+    return { id: (bot as any).id, owner_id: (bot as any).owner_id, name: (bot as any).name, description: (bot as any).description, is_active: (bot as any).is_active, phone_number: (bot as any).phone_number }
   })
 
   app.get('/bots/:id', {
@@ -37,16 +38,16 @@ export default async function routes(app: FastifyInstance) {
 
   app.get('/bots', {
     preHandler: (app as any).requireAuth,
-    schema: { tags: ['bots'], security: [{ bearerAuth: [] }], querystring: { type: 'object', properties: { workspace_id: { type: 'string' } }, required: ['workspace_id'] }, response: { 200: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } } } } } }
+    schema: { tags: ['bots'], security: [{ bearerAuth: [] }], querystring: { type: 'object', properties: { owner_id: { type: 'string' } }, required: ['owner_id'] }, response: { 200: { type: 'array', items: { type: 'object', properties: { id: { type: 'string' }, owner_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' }, phone_number: { type: 'string' } } } } } }
   }, async (req, reply) => {
-    const ws = (req.query as any).workspace_id as string
-    const bots = await listBots((app as any).config.supabase, ws)
+    const ownerId = (req.query as any).owner_id as string
+    const bots = await listBots((app as any).config.supabase, ownerId)
     return bots
   })
 
   app.patch('/bots/:id', {
     preHandler: (app as any).requireAuth,
-    schema: { tags: ['bots'], security: [{ bearerAuth: [] }], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, body: { type: 'object' }, response: { 200: { type: 'object', properties: { id: { type: 'string' }, workspace_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' } } } } }
+    schema: { tags: ['bots'], security: [{ bearerAuth: [] }], params: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] }, body: { type: 'object' }, response: { 200: { type: 'object', properties: { id: { type: 'string' }, owner_id: { type: 'string' }, name: { type: 'string' }, description: { type: 'string' }, is_active: { type: 'boolean' }, phone_number: { type: 'string' } } } } }
   }, async (req) => {
     const id = (req.params as any).id as string
     const patch = req.body as any
