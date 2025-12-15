@@ -29,7 +29,6 @@ export default async function routes(app: FastifyInstance) {
     const q = req.query as any
     const list = await listConversations((app as any).config.supabase, {
       bot_id: q.bot_id,
-      workspace_id: q.workspace_id,
       limit: q.limit ? parseInt(q.limit) : undefined,
       offset: q.offset ? parseInt(q.offset) : undefined,
       status: q.status
