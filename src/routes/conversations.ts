@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { createConversation, getConversation, listConversations, updateConversation } from '../repo/conversations'
 import { createMessage, listMessages } from '../repo/messages'
 import { getBot } from '../repo/bots'
-import { canSendMessage, recordSentMessage } from '../lib/limits'
+ 
 import { publish, subscribe } from '../lib/pubsub'
 
 const convCreate = z.object({ bot_id: z.string(), channel: z.string(), contact_identifier: z.string(), status: z.string().optional() })
@@ -51,11 +51,6 @@ export default async function routes(app: FastifyInstance) {
     const conv = await getConversation((app as any).config.supabase, id)
     if (!conv) return reply.code(404).send({ error: 'conversation_not_found' })
     const bot = await getBot((app as any).config.supabase, conv.bot_id)
-    const ws = bot?.workspace_id as string | undefined
-    if (parsed.data.direction === 'outgoing' && ws) {
-      if (!(await canSendMessage((app as any).config.supabase, ws))) return reply.code(429).send({ error: 'plan_limit_exceeded' })
-      await recordSentMessage((app as any).config.supabase, ws)
-    }
     const m = await createMessage((app as any).config.supabase, { ...parsed.data, conversation_id: id, channel: conv.channel } as any)
     publish(`conv:${id}`, m)
     return m
