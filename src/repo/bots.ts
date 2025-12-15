@@ -2,10 +2,11 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 type Bot = {
   id?: string
-  workspace_id: string
+  owner_id: string
   name: string
   description?: string
   is_active?: boolean
+  phone_number?: string
 }
 
 const botsMem = new Map<string, Bot>()
@@ -29,12 +30,12 @@ export async function getBot(client: SupabaseClient | undefined, id: string) {
   return botsMem.get(id)
 }
 
-export async function listBots(client: SupabaseClient | undefined, workspace_id: string) {
+export async function listBots(client: SupabaseClient | undefined, owner_id: string) {
   if (client) {
-    const { data } = await client.from('bots').select('*').eq('workspace_id', workspace_id)
+    const { data } = await client.from('bots').select('*').eq('owner_id', owner_id)
     return data ?? []
   }
-  return Array.from(botsMem.values()).filter(b => b.workspace_id === workspace_id)
+  return Array.from(botsMem.values()).filter(b => b.owner_id === owner_id)
 }
 
 export async function updateBot(client: SupabaseClient | undefined, id: string, patch: Partial<Bot>) {
