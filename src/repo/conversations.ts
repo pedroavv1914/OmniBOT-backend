@@ -32,21 +32,12 @@ export async function getConversation(client: SupabaseClient | undefined, id: st
   return convMem.get(id)
 }
 
-export async function listConversations(client: SupabaseClient | undefined, opts?: { bot_id?: string, workspace_id?: string, limit?: number, offset?: number, status?: string }) {
+export async function listConversations(client: SupabaseClient | undefined, opts?: { bot_id?: string, limit?: number, offset?: number, status?: string }) {
   const bot_id = opts?.bot_id
-  const workspace_id = opts?.workspace_id
   const limit = opts?.limit ?? 20
   const offset = opts?.offset ?? 0
   const status = opts?.status
   if (client) {
-    if (workspace_id && !bot_id) {
-      const { data: bots } = await client.from('bots').select('id').eq('workspace_id', workspace_id)
-      const botIds = (bots ?? []).map((b: any) => b.id)
-      let q = client.from('conversations').select('*').in('bot_id', botIds).order('created_at', { ascending: false })
-      if (status) q = q.eq('status', status)
-      const { data } = await q.range(offset, offset + limit - 1)
-      return (data ?? []) as Conversation[]
-    }
     let q = client.from('conversations').select('*').order('created_at', { ascending: false })
     if (bot_id) q = q.eq('bot_id', bot_id)
     if (status) q = q.eq('status', status)
