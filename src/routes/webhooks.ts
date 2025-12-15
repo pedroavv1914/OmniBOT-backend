@@ -4,7 +4,7 @@ import { createConversation, findConversationByBotContact, getConversation } fro
 import { getBot } from '../repo/bots'
 import { getLatestFlowByBotRepo } from '../repo/flows'
 import { getState, setState } from '../repo/state'
-import { canSendMessage, recordSentMessage } from '../lib/limits'
+ 
 import { createMessage } from '../repo/messages'
 import { publish } from '../lib/pubsub'
 
@@ -29,11 +29,8 @@ export default async function routes(app: FastifyInstance) {
       const flow = bot?.id ? await getLatestFlowByBotRepo((app as any).config.supabase, bot.id) : undefined
       const curState = await getState((app as any).config.supabase, conv.id!)
       const out = await (require('../engine/runner').runFlow)(flow, { text: d.text }, { env: (app as any).config.env, supabase: (app as any).config.supabase, bot_id: bot?.id }, { variables: curState?.variables, awaiting_var: curState?.awaiting_var, awaiting_node_id: curState?.awaiting_node_id })
-      const ws = bot?.workspace_id as string | undefined
-      if (ws && !(await canSendMessage((app as any).config.supabase, ws))) return reply.code(429).send({ error: 'plan_limit_exceeded' })
       await createMessage((app as any).config.supabase, { conversation_id: conv.id!, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
       if (out.state) await setState((app as any).config.supabase, { conversation_id: conv.id!, bot_id: bot?.id, variables: out.state?.variables ?? {}, awaiting_var: out.state?.awaiting_var, awaiting_node_id: out.state?.awaiting_node_id })
-      if (ws) await recordSentMessage((app as any).config.supabase, ws)
       publish(`conv:${conv.id}`, { conversation_id: conv.id, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
       return { ok: true }
     }
@@ -56,11 +53,8 @@ export default async function routes(app: FastifyInstance) {
       const flow = bot?.id ? await getLatestFlowByBotRepo((app as any).config.supabase, bot.id) : undefined
       const curState = await getState((app as any).config.supabase, conv.id!)
       const out = await (require('../engine/runner').runFlow)(flow, { text: d.text }, { env: (app as any).config.env, supabase: (app as any).config.supabase, bot_id: bot?.id }, { variables: curState?.variables, awaiting_var: curState?.awaiting_var, awaiting_node_id: curState?.awaiting_node_id })
-      const ws = bot?.workspace_id as string | undefined
-      if (ws && !(await canSendMessage((app as any).config.supabase, ws))) return reply.code(429).send({ error: 'plan_limit_exceeded' })
       await createMessage((app as any).config.supabase, { conversation_id: conv.id!, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
       if (out.state) await setState((app as any).config.supabase, { conversation_id: conv.id!, bot_id: bot?.id, variables: out.state?.variables ?? {}, awaiting_var: out.state?.awaiting_var, awaiting_node_id: out.state?.awaiting_node_id })
-      if (ws) await recordSentMessage((app as any).config.supabase, ws)
       publish(`conv:${conv.id}`, { conversation_id: conv.id, sender_type: 'bot', direction: 'outgoing', channel: conv.channel, content: out.content })
       return { ok: true }
     }
