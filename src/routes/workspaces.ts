@@ -1,11 +1,10 @@
 import { FastifyInstance } from 'fastify'
-import { z } from 'zod'
-import { setWorkspacePlan, getWorkspaceUsage } from '../lib/limits'
+ 
 import { createWorkspace, listWorkspacesByOwner, getWorkspaceById, addMember, listMembers, removeMember, updateWorkspaceName, deleteWorkspace } from '../repo/workspaces'
 import { getUserByEmail } from '../repo/users'
 const jwt: any = require('jsonwebtoken')
 
-const planSchema = z.object({ plan: z.enum(['free','pro','enterprise']) })
+ 
 
 export default async function routes(app: FastifyInstance) {
   app.post('/workspaces', { preHandler: (app as any).requireAuth, schema: { tags: ['workspaces'], security: [{ bearerAuth: [] }], body: { type: 'object', properties: { name: { type: 'string' } }, required: ['name'] } } }, async (req, reply) => {
@@ -48,17 +47,7 @@ export default async function routes(app: FastifyInstance) {
     const list = await listWorkspacesByOwner(supabase, ownerId)
     return list
   })
-  app.post('/workspaces/:id/plan', { schema: { tags: ['workspaces'] } }, async (req, reply) => {
-    const id = (req.params as any).id as string
-    const parsed = planSchema.safeParse(req.body)
-    if (!parsed.success) return reply.code(400).send({ error: 'invalid_plan' })
-    await setWorkspacePlan((app as any).config.supabase, id, parsed.data.plan)
-    return { ok: true }
-  })
-  app.get('/workspaces/:id/usage', { schema: { tags: ['workspaces'] } }, async (req) => {
-    const id = (req.params as any).id as string
-    return await getWorkspaceUsage((app as any).config.supabase, id)
-  })
+  
 
   app.get('/workspaces/:id/members', { preHandler: (app as any).requireAuth, schema: { tags: ['workspaces'], security: [{ bearerAuth: [] }] } }, async (req, reply) => {
     const id = (req.params as any).id as string
