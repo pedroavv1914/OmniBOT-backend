@@ -1,6 +1,7 @@
 import { FastifyInstance } from 'fastify'
 import { z } from 'zod'
 import { createConversation, getConversation, findConversationByBotContact } from '../repo/conversations'
+import { getNumberByPhone } from '../repo/numbers'
 import { getBot } from '../repo/bots'
 import { getLatestFlowByBotRepo } from '../repo/flows'
 import { getState, setState } from '../repo/state'
@@ -11,7 +12,8 @@ import { runFlow } from '../engine/runner'
 
 const incomingSchema = z.union([
   z.object({ conversation_id: z.string(), text: z.string() }),
-  z.object({ bot_id: z.string(), channel: z.string(), contact_identifier: z.string(), text: z.string() })
+  z.object({ bot_id: z.string(), channel: z.string(), contact_identifier: z.string(), text: z.string() }),
+  z.object({ phone_number: z.string(), channel: z.string(), contact_identifier: z.string(), text: z.string() })
 ])
 
 export default async function routes(app: FastifyInstance) {
@@ -24,6 +26,10 @@ export default async function routes(app: FastifyInstance) {
       if (!conv && d.bot_id && d.contact_identifier) {
         conv = await findConversationByBotContact((app as any).config.supabase, d.bot_id, d.contact_identifier)
         if (!conv) conv = await createConversation((app as any).config.supabase, { bot_id: d.bot_id, channel: d.channel, contact_identifier: d.contact_identifier })
+      }
+      if (!conv && d.phone_number) {
+        const num = await getNumberByPhone((app as any).config.supabase, d.phone_number)
+        if (num?.bot_id) conv = await createConversation((app as any).config.supabase, { bot_id: num.bot_id, channel: d.channel, contact_identifier: d.contact_identifier })
       }
       if (!conv) return reply.code(404).send({ error: 'conversation_not_found' })
       const text = d.text as string
